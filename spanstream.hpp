@@ -1,7 +1,9 @@
 #ifndef BST_SPANSTREAM_HPP_
 #define BST_SPANSTREAM_HPP_
 
+#include <ranges>
 #include <span>
+#include <type_traits>
 
 namespace bst {
 
@@ -129,6 +131,81 @@ protected:
 private:
     std::ios_base::openmode mode_;
     std::span<charT> buf_;
+};
+
+//
+// class template basic_ispanstream
+//
+template <class charT, class traits = std::char_traits<charT>>
+class basic_ispanstream : public std::basic_istream<charT, traits> {
+public:
+    using char_type = charT;
+    using int_type = typename traits::int_type;
+    using pos_type = typename traits::pos_type;
+    using off_type = typename traits::off_type;
+    using traits_type = traits;
+
+    // constructors
+    explicit basic_ispanstream(
+        std::span<charT> s, std::ios_base::openmode which = std::ios_base::in)
+        : std::basic_istream<charT, traits>(std::addressof(sb_)),
+          sb_(s, which | std::ios_base::in) {}
+
+    basic_ispanstream(const basic_ispanstream&) = delete;
+
+    basic_ispanstream(basic_ispanstream&& rhs)
+        : std::basic_istream<charT, traits>(std::move(rhs)),
+          sb_(std::move(rhs.sb_)) {
+        basic_istream<charT, traits>::set_rdbuf(std::addressof(sb_));
+    }
+
+    template <std::ranges::borrowed_range ROS>
+    requires std::conjunction_v<
+        std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
+        std::is_convertible_to<ROS, std::span<const charT>>>
+    explicit basic_ispanstream(ROS&& s)
+        : basic_ispanstream(make_temp_span(std::forward<ROS>(s))) {}
+
+    // assignment and swap
+    basic_ispanstream& operator=(const basic_ispanstream&) = delete;
+
+    basic_ispanstream& operator=(basic_ispanstream&& rhs) {
+        basic_ispanstream tmp(std::move(rhs));
+        this->swap(tmp);
+        return *this;
+    }
+
+    void swap(basic_ispanstream& rhs) {
+        std::basic_istream<charT, traits>::swap(rhs);
+        sb_.swap(rhs.sb_);
+    }
+
+    // member functions
+    basic_spanbuf<charT, traits>* rdbuf() const noexcept {
+        return const_cast<basic_spanbuf<charT, traits>*>(std::addressof(sb_));
+    }
+
+    std::span<const charT> span() const noexcept { return rdbuf()->span(); }
+    void span(std::span<charT> s) noexcept { rdbuf()->span(s); }
+
+    template <std::ranges::borrowed_range ROS>
+    requires std::conjunction_v<
+        std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
+        std::is_convertible_to<ROS, std::span<const charT>>>
+    void span(ROS&& s) noexcept {
+        this->span(make_temp_span(std::forward<ROS>(s)));
+    }
+
+    friend void swap(basic_ispanstream& x, basic_ispanstream& y) { x.swap(y); }
+
+private:
+    basic_spanbuf<charT, traits> sb_;
+
+    template <class ROS>
+    static std::span<charT> make_temp_span(ROS&& s) {
+        std::span<const charT> sp(std::forward<ROS>(s));
+        return std::span<charT>(const_cast<charT*>(sp.data()), sp.size());
+    }
 };
 
 } // namespace bst
