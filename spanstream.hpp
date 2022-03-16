@@ -49,14 +49,15 @@ public:
     using traits_type = traits;
 
     // Constructors
-    basic_spanbuf() : basic_spanbuf(std::ios_base::in | std::ios_base::out) {}
+    basic_spanbuf()
+        : basic_spanbuf(std::ios_base::in | std::ios_base::out) {}
 
     explicit basic_spanbuf(std::ios_base::openmode which)
         : basic_spanbuf(std::span<charT>(), which) {}
 
     explicit basic_spanbuf(std::span<charT> s,
-                           std::ios_base::openmode which = std::ios_base::in |
-                                                           std::ios_base::out)
+                           std::ios_base::openmode which =
+                               std::ios_base::in | std::ios_base::out)
         : basic_streambuf<charT, traits>(), mode_(which) {
         this->span(s);
     }
@@ -132,7 +133,8 @@ protected:
                 baseoff = this->pptr() - this->pbase();
             }
         } else if (way == std::ios_base::end) {
-            if ((mode_ & std::ios_base::out) && !(mode_ & std::ios_base::in)) {
+            if ((mode_ & std::ios_base::out) &&
+                !(mode_ & std::ios_base::in)) {
                 baseoff = this->pptr() - this->pbase();
             } else {
                 baseoff = buf_.size();
@@ -199,7 +201,8 @@ public:
 
     // constructors
     explicit basic_ispanstream(
-        std::span<charT> s, std::ios_base::openmode which = std::ios_base::in)
+        std::span<charT> s,
+        std::ios_base::openmode which = std::ios_base::in)
         : std::basic_istream<charT, traits>(std::addressof(sb_)),
           sb_(s, which | std::ios_base::in) {}
 
@@ -212,10 +215,11 @@ public:
     }
 
     template <std::ranges::borrowed_range ROS>
-    requires std::conjunction_v<
-        std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
-        std::is_convertible_to<ROS, std::span<const charT>>>
-    explicit basic_ispanstream(ROS&& s)
+        requires std::conjunction_v<
+            std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
+            std::is_convertible_to<
+                ROS,
+                std::span<const charT>>> explicit basic_ispanstream(ROS&& s)
         : basic_ispanstream(make_temp_span(std::forward<ROS>(s))) {}
 
     // assignment and swap
@@ -234,21 +238,24 @@ public:
 
     // member functions
     basic_spanbuf<charT, traits>* rdbuf() const noexcept {
-        return const_cast<basic_spanbuf<charT, traits>*>(std::addressof(sb_));
+        return const_cast<basic_spanbuf<charT, traits>*>(
+            std::addressof(sb_));
     }
 
     std::span<const charT> span() const noexcept { return rdbuf()->span(); }
     void span(std::span<charT> s) noexcept { rdbuf()->span(s); }
 
     template <std::ranges::borrowed_range ROS>
-    requires std::conjunction_v<
-        std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
-        std::is_convertible_to<ROS, std::span<const charT>>>
-    void span(ROS&& s) noexcept {
+        requires std::conjunction_v<
+            std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
+            std::is_convertible_to<ROS, std::span<const charT>>> void
+        span(ROS&& s) noexcept {
         this->span(make_temp_span(std::forward<ROS>(s)));
     }
 
-    friend void swap(basic_ispanstream& x, basic_ispanstream& y) { x.swap(y); }
+    friend void swap(basic_ispanstream& x, basic_ispanstream& y) {
+        x.swap(y);
+    }
 
 private:
     basic_spanbuf<charT, traits> sb_;
@@ -303,13 +310,16 @@ public:
 
     // member functions
     basic_spanbuf<charT, traits>* rdbuf() const noexcept {
-        return const_cast<basic_spanbuf<charT, traits>*>(std::addressof(sb_));
+        return const_cast<basic_spanbuf<charT, traits>*>(
+            std::addressof(sb_));
     }
 
     std::span<charT> span() const noexcept { return rdbuf()->span(); }
     void span(std::span<charT> s) noexcept { rdbuf()->span(s); }
 
-    friend void swap(basic_ospanstream& x, basic_ospanstream& y) { x.swap(y); }
+    friend void swap(basic_ospanstream& x, basic_ospanstream& y) {
+        x.swap(y);
+    }
 
 private:
     basic_spanbuf<charT, traits> sb_;
@@ -328,9 +338,9 @@ public:
     using traits_type = traits;
 
     // constructors
-    explicit basic_spanstream(
-        std::span<charT> s,
-        std::ios_base::openmode which = std::ios_base::in | std::ios_base::out)
+    explicit basic_spanstream(std::span<charT> s,
+                              std::ios_base::openmode which =
+                                  std::ios_base::in | std::ios_base::out)
         : std::basic_iostream<charT, traits>(std::addressof(sb_)),
           sb_(s, which) {}
 
@@ -358,13 +368,16 @@ public:
 
     // members
     basic_spanbuf<charT, traits>* rdbuf() const noexcept {
-        return const_cast<basic_spanbuf<charT, traits>*>(std::addressof(sb_));
+        return const_cast<basic_spanbuf<charT, traits>*>(
+            std::addressof(sb_));
     }
 
     std::span<charT> span() const noexcept { return rdbuf()->span(); }
     void span(std::span<charT> s) noexcept { rdbuf()->span(s); }
 
-    friend void swap(basic_spanstream& x, basic_spanstream& y) { x.swap(y); }
+    friend void swap(basic_spanstream& x, basic_spanstream& y) {
+        x.swap(y);
+    }
 
 private:
     basic_spanbuf<charT, traits> sb_;

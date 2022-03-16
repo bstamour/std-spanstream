@@ -15,5 +15,5 @@ PointerAlignment: Left
 SortIncludes: true
 ReflowComments: true
 
-ColumnLimit: 80
+ColumnLimit: 76
 ---
