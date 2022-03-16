@@ -117,8 +117,60 @@ protected:
     seekoff(off_type off, std::ios_base::seekdir way,
             std::ios_base::openmode which = std::ios_base::in |
                                             std::ios_base::out) override {
-        // TODO
-        return pos_type{};
+        if ((which & std::ios_base::in) && (which & std::ios_base::out) &&
+            way == std::ios_base::cur) {
+            return pos_type(off_type(-1));
+        }
+
+        off_type baseoff;
+        if (way == std::ios_base::beg)
+            baseoff = 0;
+        else if (way == std::ios_base::cur) {
+            if (which & std::ios_base::in) {
+                baseoff = this->gptr() - this->eback();
+            } else if (which & std::ios_base::out) {
+                baseoff = this->pptr() - this->pbase();
+            }
+        } else if (way == std::ios_base::end) {
+            if ((mode_ & std::ios_base::out) && !(mode_ & std::ios_base::in)) {
+                baseoff = this->pptr() - this->pbase();
+            } else {
+                baseoff = buf_.size();
+            }
+        }
+
+        if (baseoff + off < 0) {
+            return pos_type(off_type(-1));
+        }
+        if (baseoff + off > buf_.size()) {
+            return pos_type(off_type(-1));
+        }
+
+        off_type newoff = baseoff + off;
+
+        // Input sequence.
+        if (which & std::ios_base::in) {
+            char_type* xnext = this->gptr();
+            char_type* xbeg = this->eback();
+
+            xnext = xbegin + newoff;
+
+            // TODO examine this closely
+            this->setg(xbeg, xnext, this->egptr());
+        }
+
+        // Output sequence.
+        if (which & std::ios_base::out) {
+            char_type* xnext = this->pptr();
+            char_type* xbeg = this->pbase();
+
+            // TODO examine this closely
+            xnext = xbegin + newoff;
+            this->setp(xbeg, this->epptr());
+            this->pbump(newoff);
+        }
+
+        return pos_type(newoff);
     }
 
     pos_type
