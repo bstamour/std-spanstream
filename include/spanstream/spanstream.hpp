@@ -164,14 +164,8 @@ protected:
 
         // Output sequence.
         if (which & std::ios_base::out) {
-            char_type* xnext = this->pptr();
-            char_type* xbeg = this->pbase();
-
-            if (xnext == nullptr && newoff != 0)
+            if (this->pptr() == nullptr && newoff != 0)
                 return pos_type(off_type(-1));
-
-            xnext = xbegin + newoff;
-            this->setp(xbeg, this->epptr());
             this->pbump(newoff);
         }
 
@@ -218,10 +212,11 @@ public:
     }
 
     template <std::ranges::borrowed_range ROS>
-    requires std::conjunction_v<
-        std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
-        std::is_convertible_to<ROS, std::span<const charT>>>
-    explicit basic_ispanstream(ROS&& s)
+        requires std::conjunction_v<
+            std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
+            std::is_convertible_to<
+                ROS,
+                std::span<const charT>>> explicit basic_ispanstream(ROS&& s)
         : basic_ispanstream(make_temp_span(std::forward<ROS>(s))) {}
 
     // assignment and swap
@@ -248,10 +243,10 @@ public:
     void span(std::span<charT> s) noexcept { rdbuf()->span(s); }
 
     template <std::ranges::borrowed_range ROS>
-    requires std::conjunction_v<
-        std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
-        std::is_convertible_to<ROS, std::span<const charT>>>
-    void span(ROS&& s) noexcept {
+        requires std::conjunction_v<
+            std::negation<std::is_convertible_to<ROS, std::span<charT>>>,
+            std::is_convertible_to<ROS, std::span<const charT>>> void
+        span(ROS&& s) noexcept {
         this->span(make_temp_span(std::forward<ROS>(s)));
     }
 
