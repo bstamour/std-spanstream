@@ -208,6 +208,61 @@ private:
     }
 };
 
+//
+// class template basic_ospanstream
+//
+template <class charT, class traits = std::char_traits<charT>>
+class basic_ospanstream : public std::basic_ostream<charT, traits> {
+public:
+    using char_type = charT;
+    using int_type = typename traits::int_type;
+    using pos_type = typename traits::pos_type;
+    using off_type = typename traits::off_type;
+    using traits_type = traits;
+
+    // constructors
+    explict
+    basic_ospanstream(std::span<charT> s,
+                      std::ios_base::openmode which = std::ios_base::out)
+        : std::basic_ostream<charT, traits>(std::addressof(sb_)),
+          sb_(s, which | std::ios_base::out) {}
+
+    basic_ospanstream(const basic_ospanstream&) = delete;
+
+    basic_ospanstream(basic_ospanstream&& rhs)
+        : std::basic_ostream<charT, traits>(std::move(rhs)),
+          sb_(std::move(rhs.sb_)) {
+        std::basic_ostream<charT, traits>::set_rdbuf(std::addressof(sb_));
+    }
+
+    // assignment and swap
+    basic_ospanstream& operator=(const basic_ospanstream&) = delete;
+
+    basic_ospanstream& operator=(basic_ospanstream&& rhs) {
+        basic_ospanstream tmp(std::move(rhs));
+        this->swap(tmp);
+        return *this;
+    }
+
+    void swap(basic_ospanstream& rhs) {
+        std::basic_ostream<charT, traits>::swap(rhs);
+        sb_.swap(rhs.sb_);
+    }
+
+    // member functions
+    basic_spanbuf<charT, traits>* rdbuf() const noexcept {
+        return const_cast<basic_spanbuf<charT, traits>*>(std::addressof(sb_));
+    }
+
+    std::span<charT> span() const noexcept { return rdbuf()->span(); }
+    void span(std::span<charT> s) noexcept { rdbuf()->span(s); }
+
+    friend void swap(basic_ospanstream& x, basic_ospanstream& y) { x.swap(y); }
+
+private:
+    basic_spanbuf<charT, traits> sb_;
+};
+
 } // namespace bst
 
 #endif
