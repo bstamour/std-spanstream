@@ -1,0 +1,19 @@
+BasedOnStyle: LLVM
+
+---
+Language: Cpp
+Standard: c++20
+
+#RequiresClausePosition: OwnLine
+
+IndentWidth: 4
+AccessModifierOffset: -4
+
+AlwaysBreakTemplateDeclarations: true
+PointerAlignment: Left
+
+SortIncludes: true
+ReflowComments: true
+
+ColumnLimit: 80
+---
